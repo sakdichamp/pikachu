@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>AR Pikachu Catch Game</title>
+
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+
+  <!-- AR.js -->
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.7/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #000;
+    }
+
+    #ui {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    #status {
+      max-width: calc(100vw - 32px);
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.68);
+      color: #fff;
+      font-size: 14px;
+      text-align: center;
+      backdrop-filter: blur(5px);
+    }
+
+    #catchBtn {
+      display: none;
+      pointer-events: auto;
+      border: 0;
+      border-radius: 999px;
+      padding: 15px 24px;
+      min-width: 220px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(180deg, #ef5350, #c62828);
+      box-shadow: 0 8px 22px rgba(0,0,0,.35);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    #catchBtn:active {
+      transform: scale(.96);
+    }
+
+    #catchBtn.release {
+      background: linear-gradient(180deg, #42a5f5, #1565c0);
+    }
+
+    #catchBtn:disabled {
+      opacity: .65;
+    }
+
+    .hint {
+      color: #fff;
+      font-size: 12px;
+      text-shadow: 0 1px 2px #000;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="ui">
+    <div id="status">📷 ส่องกล้องไปที่ Hiro Marker</div>
+    <button id="catchBtn">🔴 จับด้วย Poké Ball</button>
+    <div class="hint">แตะปุ่มเพื่อจับหรือปล่อย Pikachu</div>
+  </div>
+
+  <a-scene
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="antialias: true; alpha: true"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; maxDetectionRate: 60;"
+  >
+    <a-marker id="hiroMarker" preset="hiro">
+
+      <!-- พื้นเงา -->
+      <a-circle
+        position="0 0.01 0"
+        rotation="-90 0 0"
+        radius="0.72"
+        color="#000000"
+        material="transparent: true; opacity: 0.18">
+      </a-circle>
+
+      <!-- =========================
+           PIKACHU แบบการ์ตูน 3D
+           ========================= -->
+      <a-entity id="pikachu" position="0 0 0" scale="1 1 1">
+
+        <!-- ลำตัว -->
+        <a-sphere
+          position="0 0.55 0"
+          radius="0.38"
+          scale="0.86 1.10 0.72"
+          color="#FFD92F"
+          material="roughness: 0.85">
+        </a-sphere>
+
+        <!-- หัว -->
+        <a-sphere
+          position="0 1.02 0"
+          radius="0.43"
+          scale="1 0.90 0.86"
+          color="#FFD92F"
+          material="roughness: 0.85">
+        </a-sphere>
+
+        <!-- หูซ้าย -->
+        <a-cone
+          position="-0.25 1.55 0"
+          rotation="0 0 -10"
+          radius-bottom="0.12"
+          radius-top="0.025"
+          height="0.72"
+          color="#FFD92F">
+        </a-cone>
+        <a-cone
+          position="-0.29 1.82 0"
+          rotation="0 0 -10"
+          radius-bottom="0.078"
+          radius-top="0.02"
+          height="0.25"
+          color="#202020">
+        </a-cone>
+
+        <!-- หูขวา -->
+        <a-cone
+          position="0.25 1.55 0"
+          rotation="0 0 10"
+          radius-bottom="0.12"
+          radius-top="0.025"
+          height="0.72"
+          color="#FFD92F">
+        </a-cone>
+        <a-cone
+          position="0.29 1.82 0"
+          rotation="0 0 10"
+          radius-bottom="0.078"
+          radius-top="0.02"
+          height="0.25"
+          color="#202020">
+        </a-cone>
+
+        <!-- ตา -->
+        <a-sphere position="-0.15 1.08 0.35" radius="0.062" color="#1B1B1B"></a-sphere>
+        <a-sphere position="0.15 1.08 0.35" radius="0.062" color="#1B1B1B"></a-sphere>
+        <a-sphere position="-0.17 1.11 0.398" radius="0.018" color="#FFFFFF"></a-sphere>
+        <a-sphere position="0.13 1.11 0.398" radius="0.018" color="#FFFFFF"></a-sphere>
+
+        <!-- จมูก -->
+        <a-sphere position="0 0.99 0.395" radius="0.022" color="#111111"></a-sphere>
+
+        <!-- ปาก -->
+        <a-torus
+          position="0 0.925 0.392"
+          rotation="90 0 0"
+          radius="0.045"
+          radius-tubular="0.012"
+          arc="180"
+          color="#7A3333">
+        </a-torus>
+
+        <!-- แก้มแดง -->
+        <a-circle position="-0.31 0.93 0.31" radius="0.085" color="#F44336"></a-circle>
+        <a-circle position="0.31 0.93 0.31" radius="0.085" color="#F44336"></a-circle>
+
+        <!-- แขน -->
+        <a-capsule
+          position="-0.34 0.64 0.07"
+          rotation="0 0 25"
+          radius="0.065"
+          height="0.34"
+          color="#FFD92F">
+        </a-capsule>
+
+        <a-capsule
+          position="0.34 0.64 0.07"
+          rotation="0 0 -25"
+          radius="0.065"
+          height="0.34"
+          color="#FFD92F">
+        </a-capsule>
+
+        <!-- เท้า -->
+        <a-sphere position="-0.18 0.18 0.13" radius="0.14" scale="1.15 .65 1.35" color="#FFD92F"></a-sphere>
+        <a-sphere position="0.18 0.18 0.13" radius="0.14" scale="1.15 .65 1.35" color="#FFD92F"></a-sphere>
+
+        <!-- หางสายฟ้า -->
+        <a-entity position="0.48 0.63 -0.02" rotation="0 0 -12">
+          <a-box position="0.10 0.05 0" width="0.13" height="0.38" depth="0.09" rotation="0 0 -35" color="#E2B425"></a-box>
+          <a-box position="0.22 0.28 0" width="0.15" height="0.40" depth="0.09" rotation="0 0 35" color="#FFD92F"></a-box>
+          <a-box position="0.39 0.52 0" width="0.18" height="0.42" depth="0.09" rotation="0 0 -35" color="#FFD92F"></a-box>
+        </a-entity>
+
+        <!-- แอนิเมชันกระดิกเบาๆ -->
+        <a-animation
+          attribute="rotation"
+          from="0 0 -2"
+          to="0 0 2"
+          direction="alternate"
+          dur="550"
+          repeat="indefinite">
+        </a-animation>
+
+      </a-entity>
+
+      <!-- =========================
+           POKÉ BALL
+           ========================= -->
+      <a-entity
+        id="pokeball"
+        visible="false"
+        position="0 0.32 1.2"
+        scale="0.35 0.35 0.35">
+
+        <!-- ลูกบอลหลัก -->
+        <a-sphere radius="0.32" color="#F5F5F5"></a-sphere>
+
+        <!-- ครึ่งแดงด้านหน้า -->
+        <a-hemisphere
+          radius="0.325"
+          position="0 0 0"
+          rotation="0 0 0"
+          color="#E53935">
+        </a-hemisphere>
+
+        <!-- แถบดำ -->
+        <a-torus
+          position="0 0 0.305"
+          rotation="90 0 0"
+          radius="0.22"
+          radius-tubular="0.035"
+          color="#111111">
+        </a-torus>
+
+        <!-- ปุ่มกลาง -->
+        <a-cylinder
+          position="0 0 0.34"
+          rotation="90 0 0"
+          radius="0.085"
+          height="0.045"
+          color="#FFFFFF">
+        </a-cylinder>
+
+        <a-torus
+          position="0 0 0.365"
+          rotation="90 0 0"
+          radius="0.09"
+          radius-tubular="0.018"
+          color="#111111">
+        </a-torus>
+
+      </a-entity>
+
+      <!-- แสงแฟลชตอนจับ/ปล่อย -->
+      <a-sphere
+        id="flash"
+        visible="false"
+        position="0 0.95 0.05"
+        radius="0.25"
+        color="#FFF176"
+        material="transparent: true; opacity: 0.85; emissive: #FFF176; emissiveIntensity: 1">
+      </a-sphere>
+
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const marker = document.querySelector("#hiroMarker");
+      const pikachu = document.querySelector("#pikachu");
+      const pokeball = document.querySelector("#pokeball");
+      const flash = document.querySelector("#flash");
+      const button = document.querySelector("#catchBtn");
+      const status = document.querySelector("#status");
+
+      let caught = false;
+      let animating = false;
+      let markerVisible = false;
+
+      marker.addEventListener("markerFound", () => {
+        markerVisible = true;
+        button.style.display = "block";
+
+        if (caught) {
+          status.textContent = "🔴 Pikachu อยู่ใน Poké Ball";
+        } else {
+          status.textContent = "⚡ พบ Pikachu แล้ว!";
+        }
+      });
+
+      marker.addEventListener("markerLost", () => {
+        markerVisible = false;
+        button.style.display = "none";
+        status.textContent = "📷 ส่องกล้องไปที่ Hiro Marker";
+      });
+
+      button.addEventListener("click", () => {
+        if (animating || !markerVisible) return;
+
+        if (!caught) {
+          catchPikachu();
+        } else {
+          releasePikachu();
+        }
+      });
+
+      function setBusy(busy) {
+        animating = busy;
+        button.disabled = busy;
+      }
+
+      function resetBallAnimation() {
+        pokeball.removeAttribute("animation__move");
+        pokeball.removeAttribute("animation__spin");
+        pokeball.removeAttribute("animation__shake");
+        pokeball.removeAttribute("animation__release");
+        pokeball.removeAttribute("animation__releaseSpin");
+      }
+
+      function flashEffect() {
+        flash.setAttribute("visible", "true");
+        flash.setAttribute("scale", "0.1 0.1 0.1");
+
+        flash.setAttribute(
+          "animation__flashscale",
+          "property: scale; from: 0.1 0.1 0.1; to: 2.8 2.8 2.8; dur: 300; easing: easeOutQuad"
+        );
+
+        flash.setAttribute(
+          "animation__flashfade",
+          "property: material.opacity; from: 0.85; to: 0; dur: 300; easing: linear"
+        );
+
+        setTimeout(() => {
+          flash.setAttribute("visible", "false");
+          flash.removeAttribute("animation__flashscale");
+          flash.removeAttribute("animation__flashfade");
+          flash.setAttribute("material", "transparent: true; opacity: 0.85; emissive: #FFF176; emissiveIntensity: 1");
+        }, 330);
+      }
+
+      function catchPikachu() {
+        setBusy(true);
+        resetBallAnimation();
+
+        status.textContent = "🎯 กำลังขว้าง Poké Ball...";
+        pokeball.setAttribute("visible", "true");
+        pokeball.setAttribute("position", "0 0.28 1.25");
+        pokeball.setAttribute("scale", "0.35 0.35 0.35");
+        pokeball.setAttribute("rotation", "0 0 0");
+
+        pokeball.setAttribute(
+          "animation__move",
+          "property: position; from: 0 0.28 1.25; to: 0 0.9 0.12; dur: 750; easing: easeOutQuad"
+        );
+
+        pokeball.setAttribute(
+          "animation__spin",
+          "property: rotation; from: 0 0 0; to: 720 360 360; dur: 750; easing: linear"
+        );
+
+        setTimeout(() => {
+          flashEffect();
+
+          pikachu.setAttribute(
+            "animation__shrink",
+            "property: scale; from: 1 1 1; to: 0.05 0.05 0.05; dur: 280; easing: easeInQuad"
+          );
+
+          pikachu.setAttribute(
+            "animation__pull",
+            "property: position; from: 0 0 0; to: 0 0.65 0.05; dur: 280; easing: easeInQuad"
+          );
+        }, 650);
+
+        setTimeout(() => {
+          pikachu.setAttribute("visible", "false");
+          pikachu.removeAttribute("animation__shrink");
+          pikachu.removeAttribute("animation__pull");
+          pikachu.setAttribute("scale", "1 1 1");
+          pikachu.setAttribute("position", "0 0 0");
+
+          pokeball.setAttribute("position", "0 0.28 0.06");
+          pokeball.setAttribute("rotation", "0 0 0");
+
+          pokeball.setAttribute(
+            "animation__shake",
+            "property: rotation; from: 0 0 -12; to: 0 0 12; dur: 140; dir: alternate; loop: 4; easing: easeInOutQuad"
+          );
+
+          status.textContent = "✨ จับ Pikachu สำเร็จ!";
+        }, 980);
+
+        setTimeout(() => {
+          caught = true;
+          button.textContent = "⚡ ปล่อย Pikachu";
+          button.classList.add("release");
+          setBusy(false);
+        }, 1650);
+      }
+
+      function releasePikachu() {
+        setBusy(true);
+        resetBallAnimation();
+
+        status.textContent = "✨ กำลังปล่อย Pikachu...";
+        pokeball.setAttribute("visible", "true");
+        pokeball.setAttribute("position", "0 0.28 0.06");
+        pokeball.setAttribute("rotation", "0 0 0");
+
+        pokeball.setAttribute(
+          "animation__release",
+          "property: position; from: 0 0.28 0.06; to: 0 0.90 0.12; dur: 500; easing: easeOutQuad"
+        );
+
+        pokeball.setAttribute(
+          "animation__releaseSpin",
+          "property: rotation; from: 0 0 0; to: 360 540 180; dur: 500; easing: linear"
+        );
+
+        setTimeout(() => {
+          flashEffect();
+
+          pikachu.setAttribute("visible", "true");
+          pikachu.setAttribute("scale", "0.05 0.05 0.05");
+          pikachu.setAttribute("position", "0 0.65 0.05");
+
+          pikachu.setAttribute(
+            "animation__grow",
+            "property: scale; from: 0.05 0.05 0.05; to: 1 1 1; dur: 350; easing: easeOutBack"
+          );
+
+          pikachu.setAttribute(
+            "animation__return",
+            "property: position; from: 0 0.65 0.05; to: 0 0 0; dur: 350; easing: easeOutQuad"
+          );
+        }, 420);
+
+        setTimeout(() => {
+          pokeball.setAttribute("visible", "false");
+          pikachu.removeAttribute("animation__grow");
+          pikachu.removeAttribute("animation__return");
+          pikachu.setAttribute("scale", "1 1 1");
+          pikachu.setAttribute("position", "0 0 0");
+
+          caught = false;
+          button.textContent = "🔴 จับด้วย Poké Ball";
+          button.classList.remove("release");
+          status.textContent = "⚡ Pikachu ออกมาแล้ว!";
+          setBusy(false);
+        }, 900);
+      }
+    });
+  </script>
+</body>
+</html>
